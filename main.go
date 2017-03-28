@@ -1,8 +1,15 @@
 package main
 
 import (
+	"html/template"
 	"net/http"
+	"path"
 )
+
+type Profile struct {
+	Name    string
+	Hobbies []string
+}
 
 func main() {
 	http.HandleFunc("/", foo)
@@ -10,7 +17,16 @@ func main() {
 }
 
 func foo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Server", "A Go Web Server")
-	w.WriteHeader(200)
-}
+	profile := Profile{"Alex", []string{"snowboarding", "programming"}}
 
+	fp := path.Join("templates", "index.html")
+	tmpl, err := template.ParseFiles(fp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, profile); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
