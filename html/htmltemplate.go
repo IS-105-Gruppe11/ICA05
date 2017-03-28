@@ -13,7 +13,7 @@ type Profile struct {
 
 func main() {
 	http.HandleFunc("/", foo)
-	http.ListenAndServe(":3000", nil)
+	http.ListenAndServe(":8001", nil)
 }
 
 func foo(w http.ResponseWriter, r *http.Request) {
