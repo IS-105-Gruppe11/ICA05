@@ -84,7 +84,7 @@ func getSubredditPosts(sr string) []RedditPost {
 		p.Data.CreatedUTC = time.Unix(int64(p.Data.Created), 0) // Change UNIX timestamp to user readable form
 		posts = append(posts, p.Data)                           // append post to be returned
 	}
-	return posts[0:1]
+	return posts[0:1] // Retrieves 1 post from each subreddit
 }
 
 // Function to get posts from the subReddits
