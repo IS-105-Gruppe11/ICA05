@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"net/http"
 	"path"
+	"log"
+	"io/ioutil"
 )
 
 type Profile struct {
@@ -17,7 +19,8 @@ func main() {
 }
 
 func foo(w http.ResponseWriter, r *http.Request) {
-	profile := Profile{"Alex", []string{"snowboarding", "programming"}}
+	profile := Profile{"Alex", []string{"snowboarding", "programming", getServerIP()}}
+
 
 	fp := path.Join("templates", "index.html")
 	tmpl, err := template.ParseFiles(fp)
@@ -28,5 +31,14 @@ func foo(w http.ResponseWriter, r *http.Request) {
 
 	if err := tmpl.Execute(w, profile); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func getServerIP() string{
+		readApi, err := http.Get("https://api.ipify.org")
+		if err != nil {log.Fatal(err)}
+		bytes, err := ioutil.ReadAll(readApi.Body)
+		if err != nil {log.Fatal(err)}
+		return string(bytes)
 	}
 }
