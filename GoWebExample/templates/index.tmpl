@@ -1,0 +1,15 @@
+<html>
+<head>
+
+</head>
+<body>
+    <!-- Range over the posts slice -->
+    {{range .}}
+        Title: {{.Title}} <br/>
+        CreatedOn: {{ .CreatedUTC }}<br/>
+        Number of Comments: {{ .NumComments }} <br/>
+        Subreddit: {{ .Subreddit }}
+        <br/><br/>
+    {{end}}
+</body>
+</html>
