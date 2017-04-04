@@ -11,13 +11,20 @@ import (
 )
 
 
-type laLiga struct {
+type liga struct {
 	Name string `json:"name"`
 	Clubs []struct {
 		Key string `json:"key"`
 		Name string `json:"name"`
 		Code string `json:"code"`
 	} `json:"clubs"`
+}
+
+type steamPlayers struct {
+	Response struct {
+		PlayerCount int `json:"player_count"`
+		Result int `json:"result"`
+	} `json:"response"`
 }
 
 func main() {
@@ -34,8 +41,9 @@ func main() {
 }
 
 
+
 // Get clubs in liga
-func getLiga() *laLiga {
+func getLiga() *liga {
 	readApi, err := http.Get("https://raw.githubusercontent.com/openfootball/" +
 		"football.json/master/2016-17/es.1.clubs.json")
 	if err != nil {
@@ -45,7 +53,7 @@ func getLiga() *laLiga {
 	if err != nil {
 		log.Fatal(err)
 	}
-	clubs := &laLiga{}
+	clubs := &liga{}
 	if err := json.Unmarshal(bytes, &clubs); err != nil {
 		log.Fatal(err)
 

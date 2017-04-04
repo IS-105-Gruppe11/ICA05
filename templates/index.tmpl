@@ -1,11 +1,14 @@
 <html>
 <head>
-
 </head>
 <body>
-<h1>Liga: {{.Name}}</h1>
-<h2>Clubs: {{.Clubs}}</h2>
-
+<h1>Liga: {{.Name}}
+    <h2>Clubs:</h2>
+    {{range .Clubs}}
+    <div>
+        <p>{{ .Name}}</p>
+    </div>
+    {{end}}
+    </p>
 </body>
-
 </html>
