@@ -10,10 +10,12 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
 
+	"github.com/google/gops/agent"
+
 	"net/http"
 )
 
-// RedditResponse is for Unmarshalling the response from subreddit
+// RedditResponse er for å "Unnmarshale" responsen fra subreddit apiene
 type RedditResponse struct {
 	Data struct {
 		Children []struct {
@@ -22,7 +24,7 @@ type RedditResponse struct {
 	} `json:"data"`
 }
 
-// RedditPost is to represent the data we need from each post
+// RedditPost er for å representere dataene vi får fra hver post
 type RedditPost struct {
 	Subreddit   string  `json:"subreddit"`
 	Created     float64 `json:"created"`
@@ -31,7 +33,7 @@ type RedditPost struct {
 	NumComments int    `json:"num_comments"`
 }
 
-// Slice of subreddits to get posts from
+// Slice med subreddits vi får post fra
 var subReddits = []string{"RustPlay", "golang", "videos", "pics", "gifs"}
 
 func main() {
@@ -48,52 +50,57 @@ func main() {
 
 	m.RunOnAddr(":8001")
 	m.Run()
+
+	if err := agent.Listen(nil); err != nil {
+		log.Fatal(err)
+	}
+	time.Sleep(time.Hour)
 }
 
-// Get posts from the subreddit provided in argument
+//Få postene fra subreddit i et argument
 func getSubredditPosts(sr string) []RedditPost {
 	client := &http.Client{Timeout: 15 * time.Second}          // Les: https://medium.com/@nate510/don-t-use-go-s-default-http-client-4804cb19f779
-	url := fmt.Sprintf("https://www.reddit.com/r/%s.json", sr) // Formatting URL with subreddit name
+	url := fmt.Sprintf("https://www.reddit.com/r/%s.json", sr) //Formaterer URL med subreddit navn
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	// Changing user agent, otherwise reddit denies the request
+	//Endrer user agent, ellers benekter reddit requesten
 	req.Header.Set("User-Agent", "GoWebExample")
 
-	// Make GET request
+	// Gjør GET request
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// Read response body
+	// Leser response body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Unmarshal the JSON to struct
+	// Unmarshal JSON til struct
 	redditResponse := &RedditResponse{}
 	if err := json.Unmarshal(body, &redditResponse); err != nil {
 		log.Fatal(err)
 	}
-	// Get posts from the RedditResponse, we only need the RedditPost struct
+	// Får post fra RedditResponse, vi trenger bare RedditPost structen
 	posts := []RedditPost{}
 	for _, p := range redditResponse.Data.Children {
-		p.Data.CreatedUTC = time.Unix(int64(p.Data.Created), 0) // Change UNIX timestamp to user readable form
-		posts = append(posts, p.Data)                           // append post to be returned
+		p.Data.CreatedUTC = time.Unix(int64(p.Data.Created), 0) // Endrer UNIX timestamp til lesbar form
+		posts = append(posts, p.Data)                           // Appender posten som skal returneres
 	}
-	return posts[0:1] // Retrieves 1 post from each subreddit
+	return posts[0:1] // Får 1 post fra hver subreddit
 }
 
-// Function to get posts from the subReddits
+// Funksjon for å få post fra subredditene
 func getRedditPosts() []RedditPost {
-	data := []RedditPost{} // It will be returned as response, contains all the posts
-	//  Looping over subreddits slice
+	data := []RedditPost{}  // Vil bli returnert som en respons, inneholder all postene
+	// Løkke som går over over subreddit slicene
 	for _, subreddit := range subReddits {
 		posts := getSubredditPosts(subreddit)
-		data = append(data, posts...) // Merging the returned posts with all posts
+		data = append(data, posts...) // Slår sammen de returnerte postene med de andre
 	}
 	return data
 }
