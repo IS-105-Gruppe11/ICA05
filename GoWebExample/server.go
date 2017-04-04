@@ -46,7 +46,7 @@ func main() {
 		r.HTML(200, "index", getRedditPosts())
 	})
 
-	m.RunOnAddr(":5050")
+	m.RunOnAddr(":8001")
 	m.Run()
 }
 
