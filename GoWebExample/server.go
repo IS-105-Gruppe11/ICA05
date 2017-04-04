@@ -51,7 +51,9 @@ func main() {
 	m.RunOnAddr(":8001")
 	m.Run()
 
-	if err := agent.Listen(nil); err != nil {
+	if err := agent.Listen(&agent.Options{
+		Addr: "158.39.77.203:8001",
+	}); err != nil {
 		log.Fatal(err)
 	}
 	time.Sleep(time.Hour)
