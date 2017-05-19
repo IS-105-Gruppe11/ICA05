@@ -11,6 +11,7 @@ import (
 	"github.com/martini-contrib/render"
 
 	"net/http"
+	"sync"
 )
 
 // RedditResponse is for Unmarshalling the response from subreddit
@@ -32,7 +33,7 @@ type RedditPost struct {
 }
 
 // Slice of subreddits to get posts from
-var subReddits = []string{"RustPlay", "golang", "videos", "pics", "gifs"}
+var subReddits = []string{"all", "golang", "videos", "pics", "gifs"}
 
 func main() {
 
@@ -46,13 +47,14 @@ func main() {
 		r.HTML(200, "index", getRedditPosts())
 	})
 
-	m.RunOnAddr(":8001")
+	m.RunOnAddr(":5050")
 	m.Run()
 }
 
-// Get posts from the subreddit provided in argument
-func getSubredditPosts(sr string) []RedditPost {
-	client := &http.Client{Timeout: 15 * time.Second}          // Les: https://medium.com/@nate510/don-t-use-go-s-default-http-client-4804cb19f779
+// Get posts from the subreddit provided in argument, send it to channel ch
+func getSubredditPosts(sr string, ch chan <- []RedditPost, wg *sync.WaitGroup) {
+	defer wg.Done()
+	client := &http.Client{Timeout: 15 * time.Second}          // Please read: https://medium.com/@nate510/don-t-use-go-s-default-http-client-4804cb19f779
 	url := fmt.Sprintf("https://www.reddit.com/r/%s.json", sr) // Formatting URL with subreddit name
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -84,16 +86,29 @@ func getSubredditPosts(sr string) []RedditPost {
 		p.Data.CreatedUTC = time.Unix(int64(p.Data.Created), 0) // Change UNIX timestamp to user readable form
 		posts = append(posts, p.Data)                           // append post to be returned
 	}
-	return posts[0:1] // Retrieves 1 post from each subreddit
+	ch <- posts
+	log.Println(sr + " done")
 }
 
 // Function to get posts from the subReddits
 func getRedditPosts() []RedditPost {
+	var wg sync.WaitGroup
+	wg.Add(len(subReddits)) // Add number of subreddits to WaitGroup
 	data := []RedditPost{} // It will be returned as response, contains all the posts
-	//  Looping over subreddits slice
+	ch := make(chan []RedditPost) // Channel that will receive the posts from subreddit
+	//  Looping over subReddits slice
 	for _, subreddit := range subReddits {
-		posts := getSubredditPosts(subreddit)
-		data = append(data, posts...) // Merging the returned posts with all posts
+		go getSubredditPosts(subreddit, ch, &wg) // Start a goroutine
+	}
+	go func(){
+		// Wait till all the goroutines finish
+		wg.Wait()
+		// Close the channel or it will block
+		 close(ch)
+	}()
+	// Loop over the channel and get data
+	for posts := range ch{
+		data = append(data, posts...) // Keep appending the posts to create final response
 	}
 	return data
 }
